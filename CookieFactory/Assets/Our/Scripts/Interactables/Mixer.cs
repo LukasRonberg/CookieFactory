@@ -82,9 +82,15 @@ public class Mixer : MonoBehaviour, IInteractable
 
     public void Interact()
     {
-        recipePanel.gameObject.SetActive(true);
-        isSelectingRecipe = true;
         InputLock.SetLocked(false);
+        if (!InputLock.IsLocked)
+        {
+            recipePanel.gameObject.SetActive(true);
+            isSelectingRecipe = true;
+        }
+
+        
+        
         Debug.Log("Test to see if locked");
         /*
         if (!isMixing)
@@ -132,5 +138,11 @@ public class Mixer : MonoBehaviour, IInteractable
     {
         // TODO: implement your game’s logic to spawn or grant the result item
         // e.g. Instantiate(pickupPrefab, outputSlot.position, Quaternion.identity)
+    }
+
+    public void CloseMenu()
+    {
+        isSelectingRecipe = false;
+        recipePanel.gameObject.SetActive(false);
     }
 }

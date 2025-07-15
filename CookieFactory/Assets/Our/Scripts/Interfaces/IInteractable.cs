@@ -8,6 +8,8 @@ public interface IInteractable
     // Perform the interaction.
     void Interact();
 
+    void CloseMenu();
+
     // (Optional) What text to show on “E” (e.g. “Mix” vs “Too cold”)
     string GetInteractionText();
 }

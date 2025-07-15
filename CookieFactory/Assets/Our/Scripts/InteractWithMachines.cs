@@ -37,6 +37,9 @@ public class InteractWithMachines : MonoBehaviour
                 if (Keyboard.current != null && Keyboard.current.eKey.wasPressedThisFrame)
                 {
                     currentInteractable.Interact();
+                } else if (Keyboard.current.escapeKey.wasPressedThisFrame)
+                {
+                    currentInteractable.CloseMenu();
                 }
             }
         }

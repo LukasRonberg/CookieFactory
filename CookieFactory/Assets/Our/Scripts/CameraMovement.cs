@@ -12,11 +12,7 @@ public class CameraMovement : MonoBehaviour
 
     void Start()
     {
-        // Lås og skjul cursor
         InputLock.SetLocked(true);
-        //Cursor.lockState = CursorLockMode.Locked;
-        //Cursor.visible = false;
-        //Debug.Log("Cursor locked and hidden. ???");
     }
 
     void Update()
@@ -60,26 +56,4 @@ public class CameraMovement : MonoBehaviour
         //if (direction != Vector3.zero)
             //Debug.Log($"Walking: {direction}");
     }
-
-    private void LockCursor()
-    {
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;
-        InputLock.SetLocked(true);
-        Debug.Log("Cursor locked & input enabled.");
-    }
-
-    private void UnlockCursor()
-    {
-        Cursor.lockState = CursorLockMode.None;
-        Cursor.visible = true;
-        InputLock.SetLocked(false);
-        Debug.Log("Cursor unlocked & input disabled.");
-    }
-    private void ToggleCursorLock()
-    {
-        if (InputLock.IsLocked) UnlockCursor();
-        else LockCursor();
-    }
-
 }
