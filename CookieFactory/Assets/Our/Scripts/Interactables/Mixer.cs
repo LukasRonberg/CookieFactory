@@ -1,13 +1,15 @@
 using UnityEngine;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEngine.UIElements;
+//using UnityEngine.UIElements;
+using UnityEngine.UI;
 
 public class Mixer : MonoBehaviour, IInteractable
 {
     [SerializeField] Animator animator;
     [SerializeField] Recipe[] recipes;  // configure Flour+Water?Dough, Butter+Sugar+Egg?CookieDough, etc.
     [SerializeField] GameObject recipePanel;
+    [SerializeField] Button recipeButton;
 
     private List<Item> insertedItems = new List<Item>(); // items dropped into the mixer
     private bool isMixing = false;
@@ -18,6 +20,11 @@ public class Mixer : MonoBehaviour, IInteractable
     public void Awake()
     {
         recipePanel.SetActive(false);
+        recipeButton.onClick.AddListener(OnRecipeButtonClicked);
+    }
+    private void OnRecipeButtonClicked()
+    {
+        Debug.Log("Test!");
     }
 
     /// Call this when the player drops or uses an item on the mixer.
@@ -77,6 +84,8 @@ public class Mixer : MonoBehaviour, IInteractable
     {
         recipePanel.gameObject.SetActive(true);
         isSelectingRecipe = true;
+        InputLock.SetLocked(false);
+        Debug.Log("Test to see if locked");
         /*
         if (!isMixing)
         {
