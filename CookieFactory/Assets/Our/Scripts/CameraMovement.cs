@@ -49,7 +49,7 @@ public class CameraMovement : MonoBehaviour
         direction = direction.normalized;
         transform.parent.position += direction * moveSpeed * Time.deltaTime;
 
-        if (direction != Vector3.zero)
-            Debug.Log($"Walking: {direction}");
+        //if (direction != Vector3.zero)
+            //Debug.Log($"Walking: {direction}");
     }
 }
