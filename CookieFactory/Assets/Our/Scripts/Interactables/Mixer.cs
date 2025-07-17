@@ -1,17 +1,20 @@
-using UnityEngine;
+﻿using UnityEngine;
 using System.Collections.Generic;
 using System.Linq;
 //using UnityEngine.UIElements;
 using UnityEngine.UI;
+using System.Text;
 
 public class Mixer : MonoBehaviour, IInteractable
 {
     [SerializeField] Animator animator;
-    [SerializeField] Recipe[] recipes;  // configure Flour+Water?Dough, Butter+Sugar+Egg?CookieDough, etc.
+    [SerializeField] Recipe[] recipes;
     [SerializeField] GameObject recipePanel;
-    [SerializeField] Button recipeButton;
+    [SerializeField] Button[] recipeButton;
 
-    private List<Item> insertedItems = new List<Item>(); // items dropped into the mixer
+    //private List<Item> insertedItems = new List<Item>(); // items dropped into the mixer
+    private List<Ingredient> insertedItems = new List<Ingredient>();
+
     private bool isMixing = false;
     private bool isSelectingRecipe = false;
     private Recipe currentRecipe;
@@ -20,34 +23,102 @@ public class Mixer : MonoBehaviour, IInteractable
     public void Awake()
     {
         recipePanel.SetActive(false);
-        recipeButton.onClick.AddListener(OnRecipeButtonClicked);
+        // for each button, hook up its click to pick that index
+        for (int i = 0; i < recipeButton.Length; i++)
+        {
+            int index = i; // capture for the closure
+            recipeButton[i].onClick.AddListener(() => OnRecipeButtonClicked(index));
+        }
     }
-    private void OnRecipeButtonClicked()
+    private void OnRecipeButtonClicked(int index)
     {
-        Debug.Log("Test!");
+        if (index < 0 || index >= recipes.Length) return;
+
+        currentRecipe = recipes[index];
+        isSelectingRecipe = false;          // done selecting
+        recipePanel.SetActive(false);       // optionally hide the panel
+        InputLock.SetLocked(true);
+        Debug.Log($"Selected recipe: {currentRecipe.recipeName}");
+
+        // now you can fire off whatever happens next, e.g. start mixing:
+        //StartMixing();
     }
 
     /// Call this when the player drops or uses an item on the mixer.
     /// Returns true if the mixer accepted the item.
-    public bool InsertItem(Item item)
+    public bool InsertItem(Item heldItem, int amount = 1)
     {
-        if (isMixing)
-            return false; // cannot insert while mixing is in progress
+        if (isMixing || currentRecipe == null)
+            return false; // can’t add mid-mix or with no recipe selected
 
-        bool isNeeded = recipes.Any(recipe =>
-            !insertedItems.Any(existingItem => existingItem.name == item.name)
-            && recipe.ingredients.Any(ingredient => ingredient.name == item.name && ingredient.amount == item.amount)
-        );
+        // Find the requirement for this exact SO in the current recipe
+        var req = currentRecipe.ingredients
+                     .FirstOrDefault(i => i.item == heldItem);
+        if (req.item == null)
+            return false; // this recipe doesn’t use that item
 
-        if (!isNeeded)
+        // How many of that SO have we already inserted?
+        int alreadyInserted = insertedItems
+            .Where(i => i.item == heldItem)
+            .Sum(i => i.amount);
+
+        // Don’t allow over-inserting beyond what the recipe needs
+        if (alreadyInserted + amount > req.amount)
             return false;
 
-        insertedItems.Add(item);
+        // All good—wrap it as an Ingredient and add it
+        insertedItems.Add(new Ingredient
+        {
+            item = heldItem,
+            amount = amount
+        });
         return true;
     }
 
     /// Returns the text to display to the player.
+    /// 
+
+
+
+
+
     public string GetInteractionText()
+    {
+        // 1) Mixing done?
+        if (isMixing)
+            return "Collect (E)";
+
+        // 2) In recipe‐selection panel?
+        if (isSelectingRecipe)
+            return string.Empty;
+
+        // 3) No recipe chosen?
+        if (currentRecipe == null)
+            return "Select Recipes (E)";
+
+        // 4) Build exactly the lines you want
+        var sb = new StringBuilder();
+        sb.AppendLine(currentRecipe.recipeName + ":");
+
+        foreach (var req in currentRecipe.ingredients)
+        {
+            // Sum up how much of this Item SO you’ve inserted
+            int have = insertedItems
+                .Where(ins => ins.item == req.item)
+                .Sum(ins => ins.amount);
+
+            // Use the SO’s name (or id/displayName if you added one)
+            string displayName = req.item.name;
+
+            sb.AppendLine($"{displayName} {have}/{req.amount}");
+        }
+        // Trim the trailing newline
+        return sb.ToString().TrimEnd();
+    }
+
+
+
+    /*public string GetInteractionText()
     {
         if (!isMixing)
         {
@@ -65,7 +136,7 @@ public class Mixer : MonoBehaviour, IInteractable
         {
             return "Collect";
         }
-    }
+    }*/
 
     /// Controls whether the player can interact with the mixer (Mix or Collect).
     public bool CanInteract()
@@ -82,16 +153,16 @@ public class Mixer : MonoBehaviour, IInteractable
 
     public void Interact()
     {
-        InputLock.SetLocked(false);
-        if (!InputLock.IsLocked)
+        if (currentRecipe == null)
         {
+            InputLock.SetLocked(false);
             recipePanel.gameObject.SetActive(true);
             isSelectingRecipe = true;
         }
 
-        
-        
-        Debug.Log("Test to see if locked");
+
+
+
         /*
         if (!isMixing)
         {
@@ -114,29 +185,10 @@ public class Mixer : MonoBehaviour, IInteractable
         */
     }
 
-
-    /// Checks if the set of inserted items exactly matches one recipe's ingredients.
-    private Recipe FindMatchingRecipe()
-    {
-        foreach (var recipe in recipes)
-        {
-            if (recipe.ingredients.Length != insertedItems.Count)
-                continue;
-
-            bool isMatch = recipe.ingredients.All(ingredient =>
-                insertedItems.Any(existingItem => existingItem.name == ingredient.name && existingItem.amount == ingredient.amount)
-            );
-
-            if (isMatch)
-                return recipe;
-        }
-        return null;
-    }
-
     /// Spawns or gives the result item(s) when mixing is complete.
     private void SpawnResult(Item resultItem)
     {
-        // TODO: implement your game�s logic to spawn or grant the result item
+        // TODO: implement your game’s logic to spawn or grant the result item
         // e.g. Instantiate(pickupPrefab, outputSlot.position, Quaternion.identity)
     }
 

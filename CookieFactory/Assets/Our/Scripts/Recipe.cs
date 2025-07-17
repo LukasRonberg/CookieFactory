@@ -1,11 +1,16 @@
 using UnityEngine;
 
 [System.Serializable]
-public class Recipe
+public struct Ingredient
 {
-    // inputs: array of Item (name + amount)
-    public Item[] ingredients;
+    public Item item;
+    public int amount;
+}
 
-    // outputs: array of Item (name + amount)
-    public Item[] results;
+[CreateAssetMenu(fileName = "New Recipe", menuName = "Game/Recipe")]
+public class Recipe : ScriptableObject
+{
+    public string recipeName;
+    public Ingredient[] ingredients;
+    public Ingredient[] results;
 }

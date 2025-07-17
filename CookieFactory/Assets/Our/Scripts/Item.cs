@@ -1,8 +1,12 @@
 using UnityEngine;
 
-[System.Serializable]
-public class Item
+[CreateAssetMenu(fileName = "New Item", menuName = "Game/Item")]
+public class Item : ScriptableObject
 {
-    public string name;
-    public int amount;
+    [Tooltip("Internal ID; example: 'flour'")]
+    public string id;
+    [Tooltip("Prefab to spawn when you create this item")]
+    public GameObject prefab;
+    [Tooltip("Icon for UI, etc.")]
+    public Sprite icon;
 }

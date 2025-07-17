@@ -7,7 +7,7 @@ public class InteractWithMachines : MonoBehaviour
     public Camera playerCamera;
     public float maxDistance = 5f; // How far to check if object is interactable
     public TMP_Text interactionText;
-    public string interactableTag = "Machine";
+    public string[] interactableTags = { "Machine", "Item" };
     [Tooltip("Optional layer mask for performance")]
     public LayerMask layerMask = ~0;  // default = everything
 
@@ -55,8 +55,10 @@ public class InteractWithMachines : MonoBehaviour
     {
         while (t != null)
         {
-            if (t.CompareTag(interactableTag))
-                return true;
+            foreach (var tag in interactableTags)
+                if (t.CompareTag(tag))
+                    return true;
+
             t = t.parent;
         }
         return false;
