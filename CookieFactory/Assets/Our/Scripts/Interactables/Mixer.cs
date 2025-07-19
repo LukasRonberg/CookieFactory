@@ -5,7 +5,7 @@ using System.Linq;
 using UnityEngine.UI;
 using System.Text;
 
-public class Mixer : MonoBehaviour, IInteractable
+public class Mixer : MonoBehaviour, IInteractable, IItemReceiver
 {
     [SerializeField] Animator animator;
     [SerializeField] Recipe[] recipes;
@@ -18,6 +18,8 @@ public class Mixer : MonoBehaviour, IInteractable
     private bool isMixing = false;
     private bool isSelectingRecipe = false;
     private Recipe currentRecipe;
+
+    public Recipe CurrentRecipe => currentRecipe;
 
 
     public void Awake()
@@ -48,9 +50,10 @@ public class Mixer : MonoBehaviour, IInteractable
     /// Returns true if the mixer accepted the item.
     public bool InsertItem(Item heldItem, int amount = 1)
     {
+        Debug.Log("1st");
         if (isMixing || currentRecipe == null)
             return false; // can’t add mid-mix or with no recipe selected
-
+        Debug.Log("2nd");
         // Find the requirement for this exact SO in the current recipe
         var req = currentRecipe.ingredients
                      .FirstOrDefault(i => i.item == heldItem);
@@ -61,11 +64,11 @@ public class Mixer : MonoBehaviour, IInteractable
         int alreadyInserted = insertedItems
             .Where(i => i.item == heldItem)
             .Sum(i => i.amount);
-
+        Debug.Log("3rd");
         // Don’t allow over-inserting beyond what the recipe needs
         if (alreadyInserted + amount > req.amount)
             return false;
-
+        Debug.Log("4th");
         // All good—wrap it as an Ingredient and add it
         insertedItems.Add(new Ingredient
         {
@@ -78,7 +81,14 @@ public class Mixer : MonoBehaviour, IInteractable
     /// Returns the text to display to the player.
     /// 
 
-
+    public bool HasRecipe()
+    {
+        if (currentRecipe != null)
+        {
+            return true;
+        }
+        else return false;
+    }
 
 
 

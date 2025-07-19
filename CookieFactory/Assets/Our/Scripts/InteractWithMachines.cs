@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using TMPro;
 using UnityEngine.InputSystem;
 
@@ -12,6 +12,7 @@ public class InteractWithMachines : MonoBehaviour
     public LayerMask layerMask = ~0;  // default = everything
 
     private IInteractable currentInteractable;
+    private ItemInteractable heldItem;
     void Start()
     {
         interactionText.gameObject.SetActive(false);
@@ -24,20 +25,129 @@ public class InteractWithMachines : MonoBehaviour
 
     void Update()
     {
+        // ──────────────────────────────────────
+        // 1) Ray-cast first (so Debug.Log always fires)
+        // ──────────────────────────────────────
+        Ray ray = new Ray(playerCamera.transform.position, playerCamera.transform.forward);
+        if (Physics.Raycast(ray, out RaycastHit hit, maxDistance, layerMask) &&
+            IsTaggedInteractable(hit.transform))
+        {
+            currentInteractable = hit.transform.GetComponentInParent<IInteractable>();
+
+            if (currentInteractable != null && currentInteractable.CanInteract())
+            {
+                Debug.Log("Current Interactable: " + currentInteractable);
+                interactionText.text = currentInteractable.GetInteractionText();
+                interactionText.gameObject.SetActive(true);
+            }
+        }
+        else
+        {
+            currentInteractable = null;
+            interactionText.gameObject.SetActive(false);
+        }
+
+        // ──────────────────────────────────────
+        // 2) If we’re holding something, decide insert vs drop
+        // ──────────────────────────────────────
+        if (heldItem != null)
+        {
+            // Try to see whether the object we’re looking at can receive items
+            IItemReceiver receiver = currentInteractable as IItemReceiver;
+
+            // Can we insert right now?
+            bool canInsert = receiver != null && receiver.HasRecipe();
+
+            // UI prompt
+            interactionText.text = canInsert ? "Insert" : "Drop";
+            interactionText.gameObject.SetActive(true);
+
+            // Handle the E-key
+            if (Keyboard.current != null && Keyboard.current.eKey.wasPressedThisFrame)
+            {
+                if (canInsert &&
+                    receiver.InsertItem(heldItem.ItemSO, heldItem.Quantity))
+                {
+                    // Insert succeeded → remove the world object
+                    Destroy(heldItem.gameObject);
+                }
+                else
+                {
+                    // Either no receiver or receiver rejected → just drop it
+                    heldItem.Interact();          // this calls Drop()
+                }
+
+                heldItem = null;                  // hand is now empty
+            }
+
+            return;                               // skip rest of Update while holding
+        }
+
+        // ──────────────────────────────────────
+        // 3) Normal pickup / machine interaction
+        // ──────────────────────────────────────
+        if (Keyboard.current == null) return;
+
+        if (currentInteractable != null && Keyboard.current.eKey.wasPressedThisFrame)
+        {
+            currentInteractable.Interact();
+
+            if (currentInteractable is ItemInteractable item && item.IsHeld)
+                heldItem = item; // now we’re holding something
+        }
+        else if (currentInteractable != null &&
+                 Keyboard.current.escapeKey.wasPressedThisFrame)
+        {
+            currentInteractable.CloseMenu();
+        }
+    }
+    /*void Update()
+    {
+        if (heldItem != null)
+        {
+            interactionText.text = "Drop";
+            interactionText.gameObject.SetActive(true);
+
+            /*if (Keyboard.current.eKey.wasPressedThisFrame)
+            {
+                heldItem.Interact();  // calls Drop()
+                heldItem = null;
+            }
+            return;
+        }
+
         Ray ray = new Ray(playerCamera.transform.position, playerCamera.transform.forward);
         if (Physics.Raycast(ray, out RaycastHit hit, maxDistance, layerMask) && IsTaggedInteractable(hit.transform))
-        {      
+        {
             currentInteractable = hit.transform.GetComponentInParent<IInteractable>();
+            
             if (currentInteractable != null && currentInteractable.CanInteract())
             {
                 Debug.Log("Current Interactable: " + currentInteractable);
                 interactionText.text = $"{currentInteractable.GetInteractionText()}";
                 interactionText.gameObject.SetActive(true);
 
-                if (Keyboard.current != null && Keyboard.current.eKey.wasPressedThisFrame)
+                if (Keyboard.current != null && Keyboard.current.eKey.wasPressedThisFrame && currentInteractable is IItemReceiver receiver && heldItem != null)
+                {
+                    if (receiver.InsertItem(heldItem.ItemSO, heldItem.Quantity))
+                    {
+                        Destroy(heldItem.gameObject);
+                        heldItem = null;
+                    }
+                }
+                // E PRESS
+                else if (Keyboard.current != null && Keyboard.current.eKey.wasPressedThisFrame)
                 {
                     currentInteractable.Interact();
-                } else if (Keyboard.current.escapeKey.wasPressedThisFrame)
+
+                    if (currentInteractable is ItemInteractable item && item.IsHeld)
+                        heldItem = item;
+
+
+                }
+
+                // ESC PRESS
+                else if (Keyboard.current.escapeKey.wasPressedThisFrame)
                 {
                     currentInteractable.CloseMenu();
                 }
@@ -48,7 +158,8 @@ public class InteractWithMachines : MonoBehaviour
             interactionText.gameObject.SetActive(false);
             currentInteractable = null;
         }
-    }
+    }*/
+
 
     // Tjekker efter Top parent i et objekt for at se om det har det korrekte Tag
     bool IsTaggedInteractable(Transform t)

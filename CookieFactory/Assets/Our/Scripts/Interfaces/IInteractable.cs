@@ -2,10 +2,8 @@ using UnityEngine;
 
 public interface IInteractable
 {
-    // Should we allow the interaction right now?
     bool CanInteract();
 
-    // Perform the interaction.
     void Interact();
 
     void CloseMenu();
