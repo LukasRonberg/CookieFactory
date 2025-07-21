@@ -34,7 +34,7 @@ public class InteractWithMachines : MonoBehaviour
         {
             currentInteractable = hit.transform.GetComponentInParent<IInteractable>();
 
-            if (currentInteractable != null && currentInteractable.CanInteract())
+            if (currentInteractable != null)
             {
                 Debug.Log("Current Interactable: " + currentInteractable);
                 interactionText.text = currentInteractable.GetInteractionText();
@@ -74,13 +74,13 @@ public class InteractWithMachines : MonoBehaviour
                 else
                 {
                     // Either no receiver or receiver rejected → just drop it
-                    heldItem.Interact();          // this calls Drop()
+                    heldItem.Interact(); // this calls Drop()
                 }
 
-                heldItem = null;                  // hand is now empty
+                heldItem = null;
             }
 
-            return;                               // skip rest of Update while holding
+            return; // skip rest of Update while holding
         }
 
         // ──────────────────────────────────────
@@ -93,7 +93,7 @@ public class InteractWithMachines : MonoBehaviour
             currentInteractable.Interact();
 
             if (currentInteractable is ItemInteractable item && item.IsHeld)
-                heldItem = item; // now we’re holding something
+                heldItem = item;
         }
         else if (currentInteractable != null &&
                  Keyboard.current.escapeKey.wasPressedThisFrame)
@@ -101,65 +101,6 @@ public class InteractWithMachines : MonoBehaviour
             currentInteractable.CloseMenu();
         }
     }
-    /*void Update()
-    {
-        if (heldItem != null)
-        {
-            interactionText.text = "Drop";
-            interactionText.gameObject.SetActive(true);
-
-            /*if (Keyboard.current.eKey.wasPressedThisFrame)
-            {
-                heldItem.Interact();  // calls Drop()
-                heldItem = null;
-            }
-            return;
-        }
-
-        Ray ray = new Ray(playerCamera.transform.position, playerCamera.transform.forward);
-        if (Physics.Raycast(ray, out RaycastHit hit, maxDistance, layerMask) && IsTaggedInteractable(hit.transform))
-        {
-            currentInteractable = hit.transform.GetComponentInParent<IInteractable>();
-            
-            if (currentInteractable != null && currentInteractable.CanInteract())
-            {
-                Debug.Log("Current Interactable: " + currentInteractable);
-                interactionText.text = $"{currentInteractable.GetInteractionText()}";
-                interactionText.gameObject.SetActive(true);
-
-                if (Keyboard.current != null && Keyboard.current.eKey.wasPressedThisFrame && currentInteractable is IItemReceiver receiver && heldItem != null)
-                {
-                    if (receiver.InsertItem(heldItem.ItemSO, heldItem.Quantity))
-                    {
-                        Destroy(heldItem.gameObject);
-                        heldItem = null;
-                    }
-                }
-                // E PRESS
-                else if (Keyboard.current != null && Keyboard.current.eKey.wasPressedThisFrame)
-                {
-                    currentInteractable.Interact();
-
-                    if (currentInteractable is ItemInteractable item && item.IsHeld)
-                        heldItem = item;
-
-
-                }
-
-                // ESC PRESS
-                else if (Keyboard.current.escapeKey.wasPressedThisFrame)
-                {
-                    currentInteractable.CloseMenu();
-                }
-            }
-        }
-        else
-        {
-            interactionText.gameObject.SetActive(false);
-            currentInteractable = null;
-        }
-    }*/
-
 
     // Tjekker efter Top parent i et objekt for at se om det har det korrekte Tag
     bool IsTaggedInteractable(Transform t)

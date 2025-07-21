@@ -4,6 +4,7 @@ using System.Linq;
 //using UnityEngine.UIElements;
 using UnityEngine.UI;
 using System.Text;
+using System.Collections;
 
 public class Mixer : MonoBehaviour, IInteractable, IItemReceiver
 {
@@ -11,13 +12,16 @@ public class Mixer : MonoBehaviour, IInteractable, IItemReceiver
     [SerializeField] Recipe[] recipes;
     [SerializeField] GameObject recipePanel;
     [SerializeField] Button[] recipeButton;
+    [SerializeField] private float mixDuration = 5f;
 
     //private List<Item> insertedItems = new List<Item>(); // items dropped into the mixer
     private List<Ingredient> insertedItems = new List<Ingredient>();
 
-    private bool isMixing = false;
+    private bool mixingInProgress = false;
+    private bool canCollect = false;
     private bool isSelectingRecipe = false;
     private Recipe currentRecipe;
+    private bool readyToMix = false;
 
     public Recipe CurrentRecipe => currentRecipe;
 
@@ -50,10 +54,8 @@ public class Mixer : MonoBehaviour, IInteractable, IItemReceiver
     /// Returns true if the mixer accepted the item.
     public bool InsertItem(Item heldItem, int amount = 1)
     {
-        Debug.Log("1st");
-        if (isMixing || currentRecipe == null)
+        if (mixingInProgress || currentRecipe == null || canCollect)
             return false; // can’t add mid-mix or with no recipe selected
-        Debug.Log("2nd");
         // Find the requirement for this exact SO in the current recipe
         var req = currentRecipe.ingredients
                      .FirstOrDefault(i => i.item == heldItem);
@@ -64,22 +66,18 @@ public class Mixer : MonoBehaviour, IInteractable, IItemReceiver
         int alreadyInserted = insertedItems
             .Where(i => i.item == heldItem)
             .Sum(i => i.amount);
-        Debug.Log("3rd");
         // Don’t allow over-inserting beyond what the recipe needs
         if (alreadyInserted + amount > req.amount)
             return false;
-        Debug.Log("4th");
         // All good—wrap it as an Ingredient and add it
         insertedItems.Add(new Ingredient
         {
             item = heldItem,
             amount = amount
         });
+        RecalculateReady();
         return true;
     }
-
-    /// Returns the text to display to the player.
-    /// 
 
     public bool HasRecipe()
     {
@@ -91,67 +89,34 @@ public class Mixer : MonoBehaviour, IInteractable, IItemReceiver
     }
 
 
-
     public string GetInteractionText()
     {
-        // 1) Mixing done?
-        if (isMixing)
-            return "Collect (E)";
+        if (mixingInProgress) return "Mixing…";      // timer running
+        if (canCollect) return "Collect (E)";  // finished
+        if (readyToMix) return "Mix (E)";      // all ingredients present
+        if (currentRecipe == null) return "Select Recipes (E)";
 
-        // 2) In recipe‐selection panel?
-        if (isSelectingRecipe)
-            return string.Empty;
-
-        // 3) No recipe chosen?
-        if (currentRecipe == null)
-            return "Select Recipes (E)";
-
-        // 4) Build exactly the lines you want
+        // 5) Otherwise build progress lines
         var sb = new StringBuilder();
         sb.AppendLine(currentRecipe.recipeName + ":");
 
         foreach (var req in currentRecipe.ingredients)
         {
-            // Sum up how much of this Item SO you’ve inserted
             int have = insertedItems
                 .Where(ins => ins.item == req.item)
                 .Sum(ins => ins.amount);
 
-            // Use the SO’s name (or id/displayName if you added one)
-            string displayName = req.item.name;
-
-            sb.AppendLine($"{displayName} {have}/{req.amount}");
+            sb.AppendLine($"{req.item.name} {have}/{req.amount}");
         }
-        // Trim the trailing newline
+
         return sb.ToString().TrimEnd();
     }
 
 
-
-    /*public string GetInteractionText()
-    {
-        if (!isMixing)
-        {
-            if (isSelectingRecipe)
-                return "";
-            if (insertedItems.Count == 0)
-                return "Select Recipes (E)";
-
-            // if they've added something but not a valid full set yet
-            return FindMatchingRecipe() != null
-                ? "Mix"
-                : "Insert Ingredients";
-        }
-        else
-        {
-            return "Collect";
-        }
-    }*/
-
     /// Controls whether the player can interact with the mixer (Mix or Collect).
     public bool CanInteract()
     {
-        if (isMixing)
+        if (mixingInProgress)
             //return FindMatchingRecipe() != null;
             return false;
         else
@@ -160,39 +125,42 @@ public class Mixer : MonoBehaviour, IInteractable, IItemReceiver
 
 
     /// Handles the Mix action (start mixing) and the Collect action (spawn results).
-
     public void Interact()
     {
-        if (currentRecipe == null)
+        // 1) Collect phase  ─────────────────────────────
+        if (canCollect)
+        {
+            foreach (var result in currentRecipe.results)
+                //SpawnResult(result);
+                Debug.Log("Item recieved: "+result);
+
+            insertedItems.Clear();
+            currentRecipe = null;
+            canCollect = false;
+            RecalculateReady();
+            return;
+        }
+
+        // 2) Ignore clicks while the timer is running ───
+        if (mixingInProgress)
+            return;
+
+        // 3) Start-mix phase (all ingredients present) ──
+        if (readyToMix)                          // see earlier answer for readyToMix
+        {
+            StartCoroutine(MixRoutine());        // kicks off 5-second wait
+            return;
+        }
+
+        // 4) Not mixing yet
+        if (currentRecipe == null)          // open the recipe chooser again
         {
             InputLock.SetLocked(false);
             recipePanel.gameObject.SetActive(true);
             isSelectingRecipe = true;
+            return;
         }
 
-
-
-
-        /*
-        if (!isMixing)
-        {
-            currentRecipe = FindMatchingRecipe();
-            if (currentRecipe == null)
-                return;
-
-            animator.SetTrigger("StartMix");
-            isMixing = true;
-        }
-        else
-        {
-            foreach (var resultItem in currentRecipe.results)
-                SpawnResult(resultItem);
-
-            insertedItems.Clear();
-            isMixing = false;
-            currentRecipe = null;
-        }
-        */
     }
 
     /// Spawns or gives the result item(s) when mixing is complete.
@@ -206,5 +174,26 @@ public class Mixer : MonoBehaviour, IInteractable, IItemReceiver
     {
         isSelectingRecipe = false;
         recipePanel.gameObject.SetActive(false);
+    }
+    private IEnumerator MixRoutine()
+    {
+        mixingInProgress = true;           // block other interactions
+        animator.SetBool("isMixing", true);   // play “Mixing” state
+
+        yield return new WaitForSeconds(mixDuration);
+
+        animator.SetBool("isMixing", false);  // back to “Idle/Done” state
+        mixingInProgress = false;
+        canCollect = true;                   // NOW the player may press E again
+    }
+
+
+    private void RecalculateReady()
+    {
+        // ready only when a recipe is chosen *and* every ingredient quota is met
+        readyToMix = currentRecipe != null &&
+                     currentRecipe.ingredients.All(req =>
+                         insertedItems.Where(i => i.item == req.item)
+                                      .Sum(i => i.amount) >= req.amount);
     }
 }
