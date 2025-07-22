@@ -12,6 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1cd33a89b86fd5142b5bd4bde5d6b9a9, type: 3}
   m_Name: sugar
   m_EditorClassIdentifier: 
-  id: 
-  prefab: {fileID: 0}
+  id: sugar
+  prefab: {fileID: 9028965552564086645, guid: 37d88f6f84a64ec4f81adf1c02a302d3, type: 3}
   icon: {fileID: 0}

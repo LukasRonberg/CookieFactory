@@ -131,8 +131,7 @@ public class Mixer : MonoBehaviour, IInteractable, IItemReceiver
         if (canCollect)
         {
             foreach (var result in currentRecipe.results)
-                //SpawnResult(result);
-                Debug.Log("Item recieved: "+result);
+                SpawnResult(result);
 
             insertedItems.Clear();
             currentRecipe = null;
@@ -161,14 +160,42 @@ public class Mixer : MonoBehaviour, IInteractable, IItemReceiver
             return;
         }
 
+        if (currentRecipe != null)          // open the recipe chooser again
+        {
+            InputLock.SetLocked(false);
+            recipePanel.gameObject.SetActive(true);
+            isSelectingRecipe = true;
+            return;
+        }
+
     }
 
     /// Spawns or gives the result item(s) when mixing is complete.
-    private void SpawnResult(Item resultItem)
+    private ItemInteractable SpawnResult(Ingredient ingredient)
     {
-        // TODO: implement your game’s logic to spawn or grant the result item
-        // e.g. Instantiate(pickupPrefab, outputSlot.position, Quaternion.identity)
+        if (ingredient.item.prefab == null)
+        {
+            Debug.LogWarning($"{ingredient.item.name} has no prefab assigned.");
+            return null;
+        }
+
+        Vector3 spawnPos = transform.position + Vector3.up * 0.4f;   // tweak as you like
+        GameObject go = Instantiate(ingredient.item.prefab, spawnPos, Quaternion.identity);
+
+        // (Optional) override the quantity the prefab was authored with
+        var item = go.GetComponent<ItemInteractable>();
+        if (item != null) 
+        { 
+            item.Quantity = ingredient.amount; 
+            var player = FindFirstObjectByType<InteractWithMachines>();   // or cache / inject this reference
+            player?.ForcePickup(item);
+        }
+
+  
+
+        return item;                 
     }
+
 
     public void CloseMenu()
     {

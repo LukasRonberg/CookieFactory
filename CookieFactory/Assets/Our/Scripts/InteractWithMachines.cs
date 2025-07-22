@@ -52,6 +52,7 @@ public class InteractWithMachines : MonoBehaviour
         // ──────────────────────────────────────
         if (heldItem != null)
         {
+            Debug.Log("Currently held item: " + heldItem.name);
             // Try to see whether the object we’re looking at can receive items
             IItemReceiver receiver = currentInteractable as IItemReceiver;
 
@@ -114,5 +115,12 @@ public class InteractWithMachines : MonoBehaviour
             t = t.parent;
         }
         return false;
+    }
+
+    public void ForcePickup(ItemInteractable item)
+    {
+        if (item == null || heldItem != null) return;   // already holding something
+        item.Interact();       // run the same pick-up logic used when the player presses E
+        heldItem = item;       // remember it so Drop / Insert still work
     }
 }

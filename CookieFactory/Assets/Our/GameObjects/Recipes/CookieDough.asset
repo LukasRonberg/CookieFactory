@@ -9,9 +9,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1cd33a89b86fd5142b5bd4bde5d6b9a9, type: 3}
-  m_Name: milk
+  m_Script: {fileID: 11500000, guid: 18cf3580007227a42971454f80c4460d, type: 3}
+  m_Name: CookieDough
   m_EditorClassIdentifier: 
-  id: milk
-  prefab: {fileID: 528869113434437547, guid: a7e98077274fba2419e8632dd2d6d738, type: 3}
-  icon: {fileID: 0}
+  recipeName: 
+  ingredients: []
+  results: []

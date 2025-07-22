@@ -1,4 +1,4 @@
-using Unity.VisualScripting;
+﻿using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -9,6 +9,7 @@ public class ItemInteractable : MonoBehaviour, IInteractable
     [Tooltip("How many units the player picks up")]
     [SerializeField] private int quantity = 1;
 
+    [Tooltip("If left empty the script will look for:  Player → Camera → child named HoldPoint")]
     [SerializeField] private Transform holdPoint;
     [Tooltip("Local position relative to holdPoint")]
     [SerializeField] private Vector3 holdLocalPos = Vector3.zero;
@@ -18,7 +19,11 @@ public class ItemInteractable : MonoBehaviour, IInteractable
     private bool isHeld = false;
 
     public Item ItemSO => itemSO;
-    public int Quantity => quantity;
+    public int Quantity
+    {
+        get => quantity; 
+        set => quantity = value;
+    } 
     public bool IsHeld
     {
         get => isHeld;
@@ -31,6 +36,9 @@ public class ItemInteractable : MonoBehaviour, IInteractable
     {
         _rb = GetComponent<Rigidbody>();
         _col = GetComponent<Collider>();
+
+        if (holdPoint == null)
+            holdPoint = FindHoldPoint();
     }
 
     public bool CanInteract() => true;
@@ -97,6 +105,34 @@ public class ItemInteractable : MonoBehaviour, IInteractable
 
         // collider was never disabled, so no need to re-enable
         isHeld = false;
+    }
+
+    /// Looks for GameObject tagged "Player" → first Camera in its hierarchy
+    /// → child named "HoldPoint". Returns null if any step is missing.
+    private Transform FindHoldPoint()
+    {
+        var player = GameObject.FindWithTag("Player");
+        if (player == null)
+        {
+            Debug.LogWarning($"{name}: couldn’t find an object tagged <Player>.");
+            return null;
+        }
+
+        var cam = player.GetComponentInChildren<Camera>();
+        if (cam == null)
+        {
+            Debug.LogWarning($"{name}: player has no child Camera.");
+            return null;
+        }
+
+        var hp = cam.transform.Find("HoldPoint");
+        if (hp == null)
+        {
+            Debug.LogWarning($"{name}: camera has no child named <HoldPoint>.");
+            return null;
+        }
+
+        return hp;
     }
 
     public void CloseMenu()
