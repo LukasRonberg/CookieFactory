@@ -13,5 +13,13 @@ MonoBehaviour:
   m_Name: CookieDough
   m_EditorClassIdentifier: 
   recipeName: 
-  ingredients: []
-  results: []
+  ingredients:
+  - item: {fileID: 11400000, guid: e2e0e1686fa61cb44959c6e4bab2f73c, type: 2}
+    amount: 1
+  - item: {fileID: 11400000, guid: 701931a62fc058e459724d15fb5381e5, type: 2}
+    amount: 1
+  - item: {fileID: 11400000, guid: ad43648729c0b8045ad9332d99a3d5bb, type: 2}
+    amount: 1
+  results:
+  - item: {fileID: 11400000, guid: 8ca6d17fb0cc8f448ad662340e7ae40f, type: 2}
+    amount: 1

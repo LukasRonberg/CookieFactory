@@ -5,18 +5,18 @@ using UnityEngine.UI;
 using System.Text;
 using System.Collections;
 
-public class Mixer : MonoBehaviour, IInteractable, IItemReceiver
+public class Shaper : MonoBehaviour, IInteractable, IItemReceiver
 {
     [SerializeField] Animator animator;
     [SerializeField] Recipe[] recipes;
     [SerializeField] GameObject recipePanel;
     [SerializeField] Button[] recipeButton;
-    [SerializeField] private float mixDuration = 5f;
+    [SerializeField] private float shapeDuration = 5f;
 
     //private List<Item> insertedItems = new List<Item>(); // items dropped into the mixer
     private List<Ingredient> insertedItems = new List<Ingredient>();
 
-    private bool mixingInProgress = false;
+    private bool shapingInProgress = false;
     private bool canCollect = false;
     private bool isSelectingRecipe = false;
     private Recipe currentRecipe;
@@ -53,7 +53,7 @@ public class Mixer : MonoBehaviour, IInteractable, IItemReceiver
     /// Returns true if the mixer accepted the item.
     public bool InsertItem(Item heldItem, int amount = 1)
     {
-        if (mixingInProgress || currentRecipe == null || canCollect)
+        if (shapingInProgress || currentRecipe == null || canCollect)
             return false; // can’t add mid-mix or with no recipe selected
         // Find the requirement for this exact SO in the current recipe
         var req = currentRecipe.ingredients
@@ -90,7 +90,7 @@ public class Mixer : MonoBehaviour, IInteractable, IItemReceiver
 
     public string GetInteractionText()
     {
-        if (mixingInProgress) return "Mixing…";      // timer running
+        if (shapingInProgress) return "Mixing…";      // timer running
         if (canCollect) return "Collect (E)";  // finished
         if (readyToMix) return "Mix (E)";      // all ingredients present
         if (currentRecipe == null) return "Select Recipes (E)";
@@ -115,7 +115,7 @@ public class Mixer : MonoBehaviour, IInteractable, IItemReceiver
     /// Controls whether the player can interact with the mixer (Mix or Collect).
     public bool CanInteract()
     {
-        if (mixingInProgress)
+        if (shapingInProgress)
             //return FindMatchingRecipe() != null;
             return false;
         else
@@ -140,13 +140,13 @@ public class Mixer : MonoBehaviour, IInteractable, IItemReceiver
         }
 
         // 2) Ignore clicks while the timer is running ───
-        if (mixingInProgress)
+        if (shapingInProgress)
             return;
 
         // 3) Start-mix phase (all ingredients present) ──
         if (readyToMix)                          // see earlier answer for readyToMix
         {
-            StartCoroutine(MixRoutine());        // kicks off 5-second wait
+            StartCoroutine(ShapeRoutine());        // kicks off 5-second wait
             return;
         }
 
@@ -183,13 +183,13 @@ public class Mixer : MonoBehaviour, IInteractable, IItemReceiver
 
         // (Optional) override the quantity the prefab was authored with
         var item = go.GetComponent<ItemInteractable>();
-        if (item != null) 
-        { 
-            item.Quantity = ingredient.amount; 
+        if (item != null)
+        {
+            item.Quantity = ingredient.amount;
             var player = FindFirstObjectByType<InteractWithMachines>();   // or cache / inject this reference
             player?.ForcePickup(item);
-        }  
-        return item;                 
+        }
+        return item;
     }
 
 
@@ -198,15 +198,15 @@ public class Mixer : MonoBehaviour, IInteractable, IItemReceiver
         isSelectingRecipe = false;
         recipePanel.gameObject.SetActive(false);
     }
-    private IEnumerator MixRoutine()
+    private IEnumerator ShapeRoutine()
     {
-        mixingInProgress = true;           // block other interactions
-        animator.SetBool("isMixing", true);   // play “Mixing” state
+        shapingInProgress = true;           // block other interactions
+        animator.SetTrigger("Shape");
 
-        yield return new WaitForSeconds(mixDuration);
+        yield return new WaitForSeconds(shapeDuration);
 
-        animator.SetBool("isMixing", false);  // back to “Idle/Done” state
-        mixingInProgress = false;
+        animator.SetTrigger("Shape");        // back to “Idle/Done” state
+        shapingInProgress = false;
         canCollect = true;                   // NOW the player may press E again
     }
 

@@ -10,14 +10,12 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 18cf3580007227a42971454f80c4460d, type: 3}
-  m_Name: Dough
+  m_Name: CookieShapeRecipe
   m_EditorClassIdentifier: 
-  recipeName: Dough
+  recipeName: 
   ingredients:
-  - item: {fileID: 11400000, guid: ad43648729c0b8045ad9332d99a3d5bb, type: 2}
-    amount: 2
-  - item: {fileID: 11400000, guid: 701931a62fc058e459724d15fb5381e5, type: 2}
+  - item: {fileID: 11400000, guid: 8ca6d17fb0cc8f448ad662340e7ae40f, type: 2}
     amount: 1
   results:
-  - item: {fileID: 11400000, guid: 8ca6d17fb0cc8f448ad662340e7ae40f, type: 2}
+  - item: {fileID: 11400000, guid: 9e1cfa2e19ca736409066bef88fde63e, type: 2}
     amount: 1
