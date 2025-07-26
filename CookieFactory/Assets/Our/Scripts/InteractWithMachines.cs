@@ -66,19 +66,33 @@ public class InteractWithMachines : MonoBehaviour
             // Handle the E-key
             if (Keyboard.current != null && Keyboard.current.eKey.wasPressedThisFrame)
             {
-                if (canInsert &&
-                    receiver.InsertItem(heldItem.ItemSO, heldItem.Quantity))
+                if (canInsert)
                 {
-                    // Insert succeeded → remove the world object
-                    Destroy(heldItem.gameObject);
+                    int inserted = receiver.InsertItem(heldItem.ItemSO, heldItem.Quantity);
+
+                    if (inserted > 0)
+                    {
+                        heldItem.Quantity -= inserted;          // shrink the stack
+
+                        if (heldItem.Quantity <= 0)             // nothing left
+                        {
+                            Destroy(heldItem.gameObject);       // remove world object
+                            heldItem = null;                    // ← ONLY here
+                        }
+                    }
+                    else
+                    {
+                        // receiver refused → fall back to drop
+                        heldItem.Interact();
+                        heldItem = null;                        // ← dropped, so clear ref
+                    }
                 }
                 else
                 {
-                    // Either no receiver or receiver rejected → just drop it
-                    heldItem.Interact(); // this calls Drop()
+                    // couldn’t insert at all → just drop
+                    heldItem.Interact();
+                    heldItem = null;                            // ← dropped, so clear ref
                 }
-
-                heldItem = null;
             }
 
             return; // skip rest of Update while holding

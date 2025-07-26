@@ -5,18 +5,18 @@ using UnityEngine.UI;
 using System.Text;
 using System.Collections;
 
-public class Mixer : MonoBehaviour, IInteractable, IItemReceiver
+public class Oven : MonoBehaviour, IInteractable, IItemReceiver
 {
     [SerializeField] Animator animator;
     [SerializeField] Recipe[] recipes;
     [SerializeField] GameObject recipePanel;
     [SerializeField] Button[] recipeButton;
-    [SerializeField] private float mixDuration = 5f;
+    [SerializeField] private float shapeDuration = 5f;
 
     //private List<Item> insertedItems = new List<Item>(); // items dropped into the mixer
     private List<Ingredient> insertedItems = new List<Ingredient>();
 
-    private bool mixingInProgress = false;
+    private bool ovenInProgress = false;
     private bool canCollect = false;
     private bool isSelectingRecipe = false;
     private Recipe currentRecipe;
@@ -53,7 +53,7 @@ public class Mixer : MonoBehaviour, IInteractable, IItemReceiver
     /// Returns true if the mixer accepted the item.
     public int InsertItem(Item itemSO, int amount)
     {
-        if (mixingInProgress || currentRecipe == null || canCollect)
+        if (ovenInProgress || currentRecipe == null || canCollect)
             return 0;
 
         var req = currentRecipe.ingredients.FirstOrDefault(i => i.item == itemSO);
@@ -84,7 +84,7 @@ public class Mixer : MonoBehaviour, IInteractable, IItemReceiver
 
     public string GetInteractionText()
     {
-        if (mixingInProgress) return "Mixing…";      // timer running
+        if (ovenInProgress) return "Mixing…";      // timer running
         if (canCollect) return "Collect (E)";  // finished
         if (readyToMix) return "Mix (E)";      // all ingredients present
         if (currentRecipe == null) return "Select Recipes (E)";
@@ -109,7 +109,7 @@ public class Mixer : MonoBehaviour, IInteractable, IItemReceiver
     /// Controls whether the player can interact with the mixer (Mix or Collect).
     public bool CanInteract()
     {
-        if (mixingInProgress)
+        if (ovenInProgress)
             //return FindMatchingRecipe() != null;
             return false;
         else
@@ -134,13 +134,13 @@ public class Mixer : MonoBehaviour, IInteractable, IItemReceiver
         }
 
         // 2) Ignore clicks while the timer is running ───
-        if (mixingInProgress)
+        if (ovenInProgress)
             return;
 
         // 3) Start-mix phase (all ingredients present) ──
         if (readyToMix)                          // see earlier answer for readyToMix
         {
-            StartCoroutine(MixRoutine());        // kicks off 5-second wait
+            StartCoroutine(OvenRoutine());        // kicks off 5-second wait
             return;
         }
 
@@ -177,13 +177,13 @@ public class Mixer : MonoBehaviour, IInteractable, IItemReceiver
 
         // (Optional) override the quantity the prefab was authored with
         var item = go.GetComponent<ItemInteractable>();
-        if (item != null) 
-        { 
-            item.Quantity = ingredient.amount; 
+        if (item != null)
+        {
+            item.Quantity = ingredient.amount;
             var player = FindFirstObjectByType<InteractWithMachines>();   // or cache / inject this reference
             player?.ForcePickup(item);
-        }  
-        return item;                 
+        }
+        return item;
     }
 
 
@@ -192,16 +192,18 @@ public class Mixer : MonoBehaviour, IInteractable, IItemReceiver
         isSelectingRecipe = false;
         recipePanel.gameObject.SetActive(false);
     }
-    private IEnumerator MixRoutine()
+    private IEnumerator OvenRoutine()
     {
-        mixingInProgress = true;           // block other interactions
-        animator.SetBool("isMixing", true);   // play “Mixing” state
+        ovenInProgress = true;           // block other interactions
+        animator.SetTrigger("StartOven");
 
-        yield return new WaitForSeconds(mixDuration);
+        yield break;
+    }
 
-        animator.SetBool("isMixing", false);  // back to “Idle/Done” state
-        mixingInProgress = false;
-        canCollect = true;                   // NOW the player may press E again
+    public void OnOvenComplete()
+    {
+        ovenInProgress = false;
+        canCollect = true;
     }
 
 

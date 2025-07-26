@@ -51,32 +51,26 @@ public class Shaper : MonoBehaviour, IInteractable, IItemReceiver
 
     /// Call this when the player drops or uses an item on the mixer.
     /// Returns true if the mixer accepted the item.
-    public bool InsertItem(Item heldItem, int amount = 1)
+    public int InsertItem(Item itemSO, int amount)
     {
         if (shapingInProgress || currentRecipe == null || canCollect)
-            return false; // can’t add mid-mix or with no recipe selected
-        // Find the requirement for this exact SO in the current recipe
-        var req = currentRecipe.ingredients
-                     .FirstOrDefault(i => i.item == heldItem);
-        if (req.item == null)
-            return false; // this recipe doesn’t use that item
+            return 0;
 
-        // How many of that SO have we already inserted?
-        int alreadyInserted = insertedItems
-            .Where(i => i.item == heldItem)
-            .Sum(i => i.amount);
-        // Don’t allow over-inserting beyond what the recipe needs
-        if (alreadyInserted + amount > req.amount)
-            return false;
-        // All good—wrap it as an Ingredient and add it
-        insertedItems.Add(new Ingredient
-        {
-            item = heldItem,
-            amount = amount
-        });
+        var req = currentRecipe.ingredients.FirstOrDefault(i => i.item == itemSO);
+        if (req.item == null) return 0;
+
+        int already = insertedItems.Where(i => i.item == itemSO)
+                                   .Sum(i => i.amount);
+
+        int space = req.amount - already;          // how many still needed
+        int toTake = Mathf.Clamp(amount, 0, space); // clip to what fits
+        if (toTake == 0) return 0;
+
+        insertedItems.Add(new Ingredient { item = itemSO, amount = toTake });
         RecalculateReady();
-        return true;
+        return toTake;                               // <── key change
     }
+
 
     public bool HasRecipe()
     {
